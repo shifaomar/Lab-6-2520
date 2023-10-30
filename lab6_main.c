@@ -7,7 +7,6 @@
 
 #include "employee.h"
 
-
 /**
  * TODO:
  * qsort comparator for two records based on the surname field
@@ -15,6 +14,10 @@
  */
 int recordCompare(const void *a, const void *b)
 {
+	const EMPLOYEErecord *recordA = (const EMPLOYEErecord *)a;
+	const EMPLOYEErecord *recordB = (const EMPLOYEErecord *)b;
+
+	return strcmp(recordA->surname, recordB->surname);
 }
 
 /**
@@ -26,7 +29,13 @@ int recordCompare(const void *a, const void *b)
  * are passing you a pointer TO a pointer
  */
 
+int pointerCompare(const void *a, const void *b)
+{
+	const EMPLOYEErecord *recordA = *((const EMPLOYEErecord **)a);
+	const EMPLOYEErecord *recordB = *((const EMPLOYEErecord **)b);
 
+	return -strcmp(recordA->givenname, recordB->givenname);
+}
 
 /**
  * a simple function to time the sorting of the records
@@ -42,6 +51,12 @@ timeSortingOfRecords(EMPLOYEErecord *records, int nRecords)
 	// around a call to qsort(3) to sort the array of records
 	// in ascending order by surname.
 	// HINT: you will use the comparator you wrote above
+
+	startTime = clock();
+	qsort(records, nRecords, sizeof(EMPLOYEErecord), recordCompare);
+	endTime = clock();
+
+	recordSortTimeInSeconds = (double)(endTime - startTime) / CLOCKS_PER_SEC;
 
 	return recordSortTimeInSeconds;
 }
@@ -62,6 +77,12 @@ timeSortingOfPointers(EMPLOYEErecord **recordPointers, int nRecords)
 	// HINT: you will use the comparator you wrote above
 	// ANOTHER HINT: be sure you have the right tile size
 
+	startTime = clock();
+	qsort(recordPointers, nRecords, sizeof(EMPLOYEErecord *), pointerCompare);
+	endTime = clock();
+
+	pointerSortTimeInSeconds = (double)(endTime - startTime) / CLOCKS_PER_SEC;
+
 	return pointerSortTimeInSeconds;
 }
 
@@ -69,35 +90,35 @@ timeSortingOfPointers(EMPLOYEErecord **recordPointers, int nRecords)
  * Allocate and load up the arrays, and call for the above sorting
  * to happen
  */
-int
-loadAndRunSortingRepeats(
-		char *filename,
-		int nRepeatsRequested,
-		int nRecordsToLoad,
-		int nRecordsToPrint
-	)
+int loadAndRunSortingRepeats(
+	char *filename,
+	int nRepeatsRequested,
+	int nRecordsToLoad,
+	int nRecordsToPrint)
 {
 	double recordSortTimeInSeconds, pointerSortTimeInSeconds;
 	double totalRecordSortTimeInSeconds = 0,
-			totalPointerSortTimeInSeconds = 0;
+		   totalPointerSortTimeInSeconds = 0;
 	EMPLOYEErecord *records = NULL, **recordPointers = NULL;
 	int nRecords;
 	long i;
 
-	if (nRecordsToLoad < 0) nRecordsToLoad = EMPLOYEE_MAX_REC;
-
+	if (nRecordsToLoad < 0)
+		nRecordsToLoad = EMPLOYEE_MAX_REC;
 
 	/** allocate a huge array that is big enough for the whole data set */
 	records = (EMPLOYEErecord *)
-			malloc(nRecordsToLoad * sizeof(EMPLOYEErecord));
-	if (records == NULL) {
+		malloc(nRecordsToLoad * sizeof(EMPLOYEErecord));
+	if (records == NULL)
+	{
 		fprintf(stderr, "Cannot allocate %d records\n", nRecordsToLoad);
 		return -1;
 	}
 
 	/** load the array, recording how many were actually used */
 	if ((nRecords = loadEmployeeArray(records,
-			nRecordsToLoad, filename)) < 0) {
+									  nRecordsToLoad, filename)) < 0)
+	{
 		fprintf(stderr, "Failed on load\n");
 		return -1;
 	}
@@ -106,26 +127,26 @@ loadAndRunSortingRepeats(
 	recordPointers = createPointersToListRecords(records, nRecords);
 
 	printf("Record size %ld bytes, pointer size %ld bytes\n",
-			sizeof(EMPLOYEErecord),
-			sizeof(EMPLOYEErecord *));
+		   sizeof(EMPLOYEErecord),
+		   sizeof(EMPLOYEErecord *));
 
 	printf(" -=-=-=- ORIGINAL ORDERING -=-=-=-\n");
 	printEmployeeRecordArraySummary(records,
-			nRecords, nRecordsToPrint);
+									nRecords, nRecordsToPrint);
 	printf("\n");
 	printEmployeePointerArraySummary(recordPointers,
-			nRecords, nRecordsToPrint);
+									 nRecords, nRecordsToPrint);
 	printf("\n\n");
 
-
 	printf("Sorting...\n");
-	for (i = 0; i < nRepeatsRequested; i++) {
+	for (i = 0; i < nRepeatsRequested; i++)
+	{
 
 		/** time the record based sorting */
 		recordSortTimeInSeconds = timeSortingOfRecords(records, nRecords);
 
 		pointerSortTimeInSeconds =
-				timeSortingOfPointers(recordPointers, nRecords);
+			timeSortingOfPointers(recordPointers, nRecords);
 
 		/** add to the total */
 		totalRecordSortTimeInSeconds += recordSortTimeInSeconds;
@@ -137,17 +158,17 @@ loadAndRunSortingRepeats(
 	printf(" -=-=-=- FINAL ORDERING -=-=-=-\n");
 	printf("Records - by surname\n");
 	printEmployeeRecordArraySummary(records,
-			nRecords, nRecordsToPrint);
+									nRecords, nRecordsToPrint);
 	printf("\n");
 	printf("Pointers - by given name (reverse)\n");
 	printEmployeePointerArraySummary(recordPointers,
-			nRecords, nRecordsToPrint);
+									 nRecords, nRecordsToPrint);
 
 	printf("Average times:\n");
 	printf("  records : %lf\n",
-			(totalRecordSortTimeInSeconds / (double) nRepeatsRequested));
+		   (totalRecordSortTimeInSeconds / (double)nRepeatsRequested));
 	printf("  pointers: %lf\n",
-			(totalPointerSortTimeInSeconds / (double) nRepeatsRequested));
+		   (totalPointerSortTimeInSeconds / (double)nRepeatsRequested));
 
 	/** clean up memory -- only two big chunks */
 	free(recordPointers);
@@ -171,44 +192,53 @@ void usage(char *progname)
 /**
  * Program mainline
  */
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	int i, filesProcessed = 0;
 	int nRepeatsRequested = 1, nRecordsToLoad = -1, nRecordsToPrint = -1;
 	char *programname = NULL;
 	int c;
 
-
 	/* save program name before calling getopt() */
 	programname = argv[0];
 
 	/** use getopt(3) to parse command line */
-	while ((c = getopt(argc, argv, "hN:R:n:")) != -1) {
-		if (c == 'R') {
-			if (sscanf(optarg, "%d", &nRepeatsRequested) != 1) {
+	while ((c = getopt(argc, argv, "hN:R:n:")) != -1)
+	{
+		if (c == 'R')
+		{
+			if (sscanf(optarg, "%d", &nRepeatsRequested) != 1)
+			{
 				fprintf(stderr,
 						"Error: cannot parse repeats requested from '%s'\n",
 						optarg);
 				return 1;
 			}
-		} else if (c == 'N') {
-			if (sscanf(optarg, "%d", &nRecordsToLoad) != 1) {
+		}
+		else if (c == 'N')
+		{
+			if (sscanf(optarg, "%d", &nRecordsToLoad) != 1)
+			{
 				fprintf(stderr,
 						"Error: cannot parse num records"
-								" requested from '%s'\n",
+						" requested from '%s'\n",
 						optarg);
 				return 1;
 			}
-		} else if (c == 'n') {
-			if (sscanf(optarg, "%d", &nRecordsToPrint) != 1) {
+		}
+		else if (c == 'n')
+		{
+			if (sscanf(optarg, "%d", &nRecordsToPrint) != 1)
+			{
 				fprintf(stderr,
 						"Error: cannot parse num records"
-								" to print from '%s'\n",
+						" to print from '%s'\n",
 						optarg);
 				return 1;
 			}
-		} else if (c == 'h') {
+		}
+		else if (c == 'h')
+		{
 			usage(programname);
 		}
 	}
@@ -218,18 +248,20 @@ main(int argc, char **argv)
 	argv += optind;
 
 	/** getopt leaves us only "file" arguments left in argv */
-	for (i = 0; i < argc; i++) {
+	for (i = 0; i < argc; i++)
+	{
 		if (loadAndRunSortingRepeats(argv[i],
-					nRepeatsRequested, nRecordsToLoad,
-					nRecordsToPrint) < 0) {
+									 nRepeatsRequested, nRecordsToLoad,
+									 nRecordsToPrint) < 0)
+		{
 			fprintf(stderr, "Error: failed processing '%s'\n", argv[i]);
-			exit (1);
+			exit(1);
 		}
 		filesProcessed++;
 	}
 
-
-	if ( filesProcessed == 0 ) {
+	if (filesProcessed == 0)
+	{
 		fprintf(stderr,
 				"No data processed -- provide the name of"
 				" a file on the command line\n");
@@ -239,4 +271,3 @@ main(int argc, char **argv)
 
 	return 0;
 }
-
